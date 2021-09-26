@@ -90,12 +90,8 @@ func (f *openReadonlyFile) Read(p []byte) (n int, err error) {
 	}
 
 	n, err = f.contentReader.Read(p)
-	if err != nil && err != io.EOF {
-		return 0, err
-	}
-
 	f.pos += int64(n)
-	return n, nil
+	return n, err
 }
 
 func (f *openReadonlyFile) Seek(offset int64, whence int) (int64, error) {
