@@ -1,6 +1,8 @@
 server {
   listen 8765;
 
+  client_max_body_size 100M;
+
   location / {
     auth_basic "webdav";
     auth_basic_user_file /etc/nginx/conf.d/webdav.htpasswd;
