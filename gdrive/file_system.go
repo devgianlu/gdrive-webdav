@@ -125,14 +125,14 @@ func (fs *fileSystem) Stat(_ context.Context, name string) (os.FileInfo, error) 
 	log.Debugf("stat %v", name)
 
 	f, err := fs.getFile(name, false)
+	if f == nil || err == os.ErrNotExist {
+		log.Debugf("no such file: %v", name)
+		return nil, os.ErrNotExist
+	}
+
 	if err != nil {
 		log.Errorf("failed getting file ID (stat): %v", err)
 		return nil, err
-	}
-
-	if f == nil {
-		log.Debugf("no such file: %v", name)
-		return nil, os.ErrNotExist
 	}
 
 	return newFileInfo(f), nil
@@ -193,7 +193,10 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 
 	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
-		log.Errorf("failed getting file ID for %v, %v", parent, err)
+		if err != os.ErrNotExist {
+			log.Errorf("failed getting file ID for \"%v\", %v", parent, err)
+		}
+
 		return nil, err
 	}
 
