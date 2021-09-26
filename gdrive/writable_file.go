@@ -2,6 +2,7 @@ package gdrive
 
 import (
 	"bytes"
+	"golang.org/x/net/context"
 	"os"
 	"path"
 
@@ -10,12 +11,11 @@ import (
 )
 
 type openWritableFile struct {
-	fileSystem *fileSystem
-	buffer     bytes.Buffer
-	size       int64
-	name       string
-	flag       int
-	perm       os.FileMode
+	ctx    context.Context
+	fs     *fileSystem
+	buffer bytes.Buffer
+	size   int64
+	name   string
 }
 
 func (f *openWritableFile) Write(p []byte) (int, error) {
@@ -24,7 +24,7 @@ func (f *openWritableFile) Write(p []byte) (int, error) {
 	return n, err
 }
 
-func (f *openWritableFile) Readdir(count int) ([]os.FileInfo, error) {
+func (f *openWritableFile) Readdir(_ int) ([]os.FileInfo, error) {
 	log.Panic("not supported: openWritableFile.Readdir")
 	return nil, nil
 }
@@ -39,8 +39,8 @@ func (f *openWritableFile) Stat() (os.FileInfo, error) {
 func (f *openWritableFile) Close() error {
 	log.Debugf("close %v", f.name)
 
-	fs := f.fileSystem
-	fileID, err := fs.getFileID(f.name, false)
+	fs := f.fs
+	fileID, err := fs.getFileID(f.ctx, f.name, false)
 	if err != nil && err != os.ErrNotExist {
 		log.Error(err)
 		return err
@@ -55,7 +55,7 @@ func (f *openWritableFile) Close() error {
 	parent := path.Dir(f.name)
 	base := path.Base(f.name)
 
-	parentID, err := fs.getFileID(parent, true)
+	parentID, err := fs.getFileID(f.ctx, parent, true)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -72,7 +72,7 @@ func (f *openWritableFile) Close() error {
 		Parents: []string{parentID},
 	}
 
-	_, err = fs.client.Files.Create(file).Media(&f.buffer).Do()
+	_, err = fs.client.Files.Create(file).Media(&f.buffer).Context(f.ctx).Do()
 	if err != nil {
 		log.Error(err)
 		return err
@@ -85,12 +85,12 @@ func (f *openWritableFile) Close() error {
 	return nil
 }
 
-func (f *openWritableFile) Read(p []byte) (n int, err error) {
-	log.Panic("not implemented: openWritableFile.Read")
+func (f *openWritableFile) Read(_ []byte) (n int, err error) {
+	log.Panic("not supported: openWritableFile.Read")
 	return -1, nil
 }
 
-func (f *openWritableFile) Seek(offset int64, whence int) (int64, error) {
-	log.Panic("not implemented: openWritableFile.Seek")
+func (f *openWritableFile) Seek(_ int64, _ int) (int64, error) {
+	log.Panic("not supported: openWritableFile.Seek")
 	return -1, nil
 }

@@ -22,18 +22,11 @@ func newFileInfo(file *drive.File) *fileInfo {
 		panic(err)
 	}
 
-	var name string
-	if file.OriginalFilename != "" {
-		name = file.OriginalFilename
-	} else {
-		name = file.Name
-	}
-
 	return &fileInfo{
 		isDir:   file.MimeType == mimeTypeFolder,
 		modTime: modTime,
 		size:    file.Size,
-		name:    name,
+		name:    getName(file),
 	}
 }
 

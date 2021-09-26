@@ -63,7 +63,7 @@ func getTokenFromFile() (*oauth2.Token, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	t := &oauth2.Token{}
 	err = json.NewDecoder(f).Decode(t)
@@ -75,8 +75,7 @@ func getTokenFromFile() (*oauth2.Token, error) {
 
 func getTokenFromWeb(ctx context.Context, config *oauth2.Config) *oauth2.Token {
 	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
+	fmt.Printf("go to the following link in your browser then type the authorization code: \n%v\n", authURL)
 
 	var code string
 	if _, err := fmt.Scan(&code); err != nil {
@@ -87,6 +86,7 @@ func getTokenFromWeb(ctx context.Context, config *oauth2.Config) *oauth2.Token {
 	if err != nil {
 		log.Panicf("Unable to retrieve token from web %v", err)
 	}
+
 	return tok
 }
 
@@ -95,11 +95,13 @@ func saveToken(token *oauth2.Token) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Saving credential file to: %s\n", file)
+
+	fmt.Printf("saving credential file to: %s\n", file)
 	f, err := os.Create(file)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+
+	defer func() { _ = f.Close() }()
 	return json.NewEncoder(f).Encode(token)
 }

@@ -19,12 +19,16 @@ type openReadonlyFile struct {
 	contentReader io.Reader
 }
 
-func (f *openReadonlyFile) Write(p []byte) (int, error) {
-	log.Panic("not implemented: openReadonlyFile.Write")
+func (f *openReadonlyFile) Write(_ []byte) (int, error) {
 	return -1, nil
 }
 
 func (f *openReadonlyFile) Readdir(count int) ([]os.FileInfo, error) {
+	if count != 0 {
+		log.Panic("not supported: openReadonlyFile.Readdir")
+		return nil, nil
+	}
+
 	files, err := f.fs.List(f.file, count)
 	if err != nil {
 		return nil, err

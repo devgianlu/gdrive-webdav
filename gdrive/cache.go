@@ -1,6 +1,8 @@
 package gdrive
 
 import (
+	"golang.org/x/net/context"
+	"google.golang.org/api/drive/v3"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -16,24 +18,25 @@ func (fs *fileSystem) invalidatePath(p string) {
 }
 
 type fileLookupResult struct {
-	fp  *fileAndPath
+	fp  *drive.File
 	err error
 }
 
-func (fs *fileSystem) getFile(p string, onlyFolder bool) (*fileAndPath, error) {
+func (fs *fileSystem) getFile(ctx context.Context, p string, onlyFolder bool) (*drive.File, error) {
 	log.Tracef("getFile %v %v", p, onlyFolder)
 	key := cacheKeyFile + p
 
 	if lookup, found := fs.cache.Get(key); found {
-		log.Trace("Reusing cached file: ", p)
+		log.Tracef("reusing cached file: %v", p)
 		result := lookup.(*fileLookupResult)
 		return result.fp, result.err
 	}
 
-	fp, err := fs.getFile0(p, onlyFolder)
+	fp, err := fs.getFile0(ctx, p, onlyFolder)
 	lookup := &fileLookupResult{fp: fp, err: err}
 	if err != nil {
 		fs.cache.Set(key, lookup, time.Minute)
 	}
+
 	return lookup.fp, lookup.err
 }

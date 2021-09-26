@@ -20,9 +20,10 @@ type fileSystem struct {
 }
 
 func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
-	log.Debugf("Mkdir %v %v", name, perm)
+	log.Debugf("mkdir %v %v", name, perm)
+
 	name = normalizePath(name)
-	pID, err := fs.getFileID(name, false)
+	pID, err := fs.getFileID(ctx, name, false)
 	if err != nil && err != os.ErrNotExist {
 		log.Error(err)
 		return err
@@ -35,7 +36,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 	parent := path.Dir(name)
 	dir := path.Base(name)
 
-	parentID, err := fs.getFileID(parent, true)
+	parentID, err := fs.getFileID(ctx, parent, true)
 	if err != nil {
 		return err
 	}
@@ -51,7 +52,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 		Parents:  []string{parentID},
 	}
 
-	_, err = fs.client.Files.Create(f).Do()
+	_, err = fs.client.Files.Create(f).Context(ctx).Do()
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 }
 
 func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
-	log.Debugf("OpenFile %v %v %v", name, flag, perm)
+	log.Debugf("openFile %v %v %v", name, flag, perm)
 	name = normalizePath(name)
 
 	if flag&os.O_RDWR != 0 {
@@ -71,29 +72,26 @@ func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm 
 			log.Panic("not implemented: fileSystem.OpenFile")
 		}
 
-		return &openWritableFile{
-			fileSystem: fs,
-			name:       name,
-			flag:       flag,
-			perm:       perm,
-		}, nil
+		return &openWritableFile{fs: fs, name: name}, nil
 	}
 
 	if flag == os.O_RDONLY {
-		file, err := fs.getFile(name, false)
+		file, err := fs.getFile(ctx, name, false)
 		if err != nil {
 			return nil, err
 		}
-		return &openReadonlyFile{fs: fs, file: file.file}, nil
+
+		return &openReadonlyFile{fs: fs, file: file}, nil
 	}
 
 	return nil, fmt.Errorf("unsupported open mode: %v", flag)
 }
 
 func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
-	log.Debugf("RemoveAll %v", name)
+	log.Debugf("removeAll %v", name)
+
 	name = normalizePath(name)
-	id, err := fs.getFileID(name, false)
+	id, err := fs.getFileID(ctx, name, false)
 	if err != nil {
 		return err
 	}
@@ -110,25 +108,25 @@ func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (fs *fileSystem) Rename(ctx context.Context, oldName, newName string) error {
-	log.Panic("not implemented: fileSystem.Rename")
+	log.Panic("not implemented: fileSystem.Rename") // TODO
 	return nil
 }
 
 func (fs *fileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error) {
-	log.Debugf("Stat %v", name)
-	f, err := fs.getFile(name, false)
+	log.Debugf("stat %v", name)
 
+	f, err := fs.getFile(ctx, name, false)
 	if err != nil {
 		log.Error(err)
 		return nil, err
 	}
 
 	if f == nil {
-		log.Debug("Can't find file ", name)
+		log.Debugf("can't find file %v", name)
 		return nil, os.ErrNotExist
 	}
 
-	return newFileInfo(f.file), nil
+	return newFileInfo(f), nil
 }
 
 func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error) {
@@ -148,39 +146,43 @@ func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error)
 
 	var files []*drive.File
 	for _, file := range r.Files {
+		if ignoreFile(file) {
+			continue
+		}
+
 		files = append(files, file)
 	}
 
 	return files, nil
 }
 
-func (fs *fileSystem) getFileID(p string, onlyFolder bool) (string, error) {
-	f, err := fs.getFile(p, onlyFolder)
-
+func (fs *fileSystem) getFileID(ctx context.Context, p string, onlyFolder bool) (string, error) {
+	f, err := fs.getFile(ctx, p, onlyFolder)
 	if err != nil {
 		return "", err
 	}
 
-	return f.file.Id, nil
+	return f.Id, nil
 }
 
-func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*fileAndPath, error) {
+func (fs *fileSystem) getFile0(ctx context.Context, p string, onlyFolder bool) (*drive.File, error) {
 	log.Tracef("getFile0 %v %v", p, onlyFolder)
 	p = normalizePath(p)
 
 	if p == "" {
-		f, err := fs.client.Files.Get("root").Do()
+		f, err := fs.client.Files.Get("root").Context(ctx).Do()
 		if err != nil {
 			log.Error(err)
 			return nil, err
 		}
-		return &fileAndPath{file: f, path: "/"}, nil
+
+		return f, nil
 	}
 
 	parent := path.Dir(p)
 	base := path.Base(p)
 
-	parentID, err := fs.getFileID(parent, true)
+	parentID, err := fs.getFileID(ctx, parent, true)
 	if err != nil {
 		log.Errorf("can't locate parent %v error: %v", parent, err)
 		return nil, err
@@ -191,6 +193,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*fileAndPath, error) 
 	if onlyFolder {
 		query += " and mimeType='" + mimeTypeFolder + "'"
 	}
+
 	q.Q(query)
 	log.Tracef("query: %v", q)
 
@@ -205,7 +208,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*fileAndPath, error) 
 			continue
 		}
 
-		return &fileAndPath{file: file, path: p}, nil
+		return file, nil
 	}
 
 	return nil, os.ErrNotExist

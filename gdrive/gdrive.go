@@ -16,11 +16,6 @@ const (
 	mimeTypeFolder = "application/vnd.google-apps.folder"
 )
 
-type fileAndPath struct {
-	file *drive.File
-	path string
-}
-
 // NewFS creates new gdrive file system.
 func NewFS(ctx context.Context, clientID string, clientSecret string) webdav.FileSystem {
 	httpClient := newHTTPClient(ctx, clientID, clientSecret)
@@ -30,17 +25,24 @@ func NewFS(ctx context.Context, clientID string, clientSecret string) webdav.Fil
 		panic(-3)
 	}
 
-	fs := &fileSystem{
+	return &fileSystem{
 		client:       client,
 		roundTripper: httpClient.Transport,
 		cache:        gocache.New(5*time.Minute, 30*time.Second),
 	}
-	return fs
 }
 
 // NewLS creates new GDrive locking system
 func NewLS() webdav.LockSystem {
 	return webdav.NewMemLS()
+}
+
+func getName(file *drive.File) string {
+	if file.OriginalFilename != "" {
+		return file.OriginalFilename
+	} else {
+		return file.Name
+	}
 }
 
 func getModTime(file *drive.File) (time.Time, error) {
