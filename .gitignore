@@ -1,6 +1,8 @@
 bin/
 pkg/
+data/
 .*token
 *.log
 main
 .vscode
+.idea

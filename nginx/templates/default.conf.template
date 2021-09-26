@@ -1,0 +1,10 @@
+server {
+  listen 8765;
+
+  location / {
+    auth_basic "webdav";
+    auth_basic_user_file /etc/nginx/conf.d/webdav.htpasswd;
+
+    proxy_pass http://webdav:8765/;
+  }
+}

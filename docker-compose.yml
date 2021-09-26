@@ -1,0 +1,22 @@
+services:
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - ./templates:/etc/nginx/templates:ro
+      - ./data/webdav.htpasswd:/etc/nginx/conf.d/webdav.htpasswd:ro
+    ports:
+      - '8765:8765'
+
+  webdav:
+    build: .
+    container_name: webdav
+    hostname: webdav
+    volumes:
+      - ./data:/root/data
+    command:
+      - '--client-id=${CLIENT_ID}'
+      - '--client-secret=${CLIENT_SECRET}'
+      - '--token-file=/root/data/.gdrive-token'
+    expose:
+      - 8765
