@@ -2,7 +2,6 @@ package gdrive
 
 import (
 	"bytes"
-	"golang.org/x/net/context"
 	"os"
 	"path"
 
@@ -11,7 +10,6 @@ import (
 )
 
 type openWritableFile struct {
-	ctx    context.Context
 	fs     *fileSystem
 	buffer bytes.Buffer
 	size   int64
@@ -40,7 +38,7 @@ func (f *openWritableFile) Close() error {
 	log.Debugf("close %v", f.name)
 
 	fs := f.fs
-	fileID, err := fs.getFileID(f.ctx, f.name, false)
+	fileID, err := fs.getFileID(f.name, false)
 	if err != nil && err != os.ErrNotExist {
 		log.Error(err)
 		return err
@@ -55,7 +53,7 @@ func (f *openWritableFile) Close() error {
 	parent := path.Dir(f.name)
 	base := path.Base(f.name)
 
-	parentID, err := fs.getFileID(f.ctx, parent, true)
+	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -72,7 +70,7 @@ func (f *openWritableFile) Close() error {
 		Parents: []string{parentID},
 	}
 
-	_, err = fs.client.Files.Create(file).Media(&f.buffer).Context(f.ctx).Do()
+	_, err = fs.client.Files.Create(file).Media(&f.buffer).Do()
 	if err != nil {
 		log.Error(err)
 		return err

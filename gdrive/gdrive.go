@@ -18,17 +18,15 @@ const (
 
 // NewFS creates new gdrive file system.
 func NewFS(ctx context.Context, clientID string, clientSecret string) webdav.FileSystem {
-	httpClient := newHTTPClient(ctx, clientID, clientSecret)
-	client, err := drive.NewService(ctx, option.WithHTTPClient(httpClient))
+	client, err := drive.NewService(ctx, option.WithHTTPClient(newHTTPClient(ctx, clientID, clientSecret)))
 	if err != nil {
 		log.Errorf("An error occurred creating Drive client: %v\n", err)
 		panic(-3)
 	}
 
 	return &fileSystem{
-		client:       client,
-		roundTripper: httpClient.Transport,
-		cache:        gocache.New(5*time.Minute, 30*time.Second),
+		client: client,
+		cache:  gocache.New(5*time.Minute, 30*time.Second),
 	}
 }
 

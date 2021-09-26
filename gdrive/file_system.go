@@ -2,7 +2,6 @@ package gdrive
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 
@@ -14,16 +13,15 @@ import (
 )
 
 type fileSystem struct {
-	client       *drive.Service
-	roundTripper http.RoundTripper
-	cache        *gocache.Cache
+	client *drive.Service
+	cache  *gocache.Cache
 }
 
-func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) error {
+func (fs *fileSystem) Mkdir(_ context.Context, name string, perm os.FileMode) error {
 	log.Debugf("mkdir %v %v", name, perm)
 
 	name = normalizePath(name)
-	pID, err := fs.getFileID(ctx, name, false)
+	pID, err := fs.getFileID(name, false)
 	if err != nil && err != os.ErrNotExist {
 		log.Error(err)
 		return err
@@ -36,7 +34,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 	parent := path.Dir(name)
 	dir := path.Base(name)
 
-	parentID, err := fs.getFileID(ctx, parent, true)
+	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
 		return err
 	}
@@ -52,7 +50,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 		Parents:  []string{parentID},
 	}
 
-	_, err = fs.client.Files.Create(f).Context(ctx).Do()
+	_, err = fs.client.Files.Create(f).Do()
 	if err != nil {
 		return err
 	}
@@ -63,7 +61,7 @@ func (fs *fileSystem) Mkdir(ctx context.Context, name string, perm os.FileMode) 
 	return nil
 }
 
-func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
+func (fs *fileSystem) OpenFile(_ context.Context, name string, flag int, perm os.FileMode) (webdav.File, error) {
 	log.Debugf("openFile %v %v %v", name, flag, perm)
 	name = normalizePath(name)
 
@@ -76,7 +74,7 @@ func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm 
 	}
 
 	if flag == os.O_RDONLY {
-		file, err := fs.getFile(ctx, name, false)
+		file, err := fs.getFile(name, false)
 		if err != nil {
 			return nil, err
 		}
@@ -87,11 +85,11 @@ func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm 
 	return nil, fmt.Errorf("unsupported open mode: %v", flag)
 }
 
-func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
+func (fs *fileSystem) RemoveAll(_ context.Context, name string) error {
 	log.Debugf("removeAll %v", name)
 
 	name = normalizePath(name)
-	id, err := fs.getFileID(ctx, name, false)
+	id, err := fs.getFileID(name, false)
 	if err != nil {
 		return err
 	}
@@ -107,8 +105,8 @@ func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
 	return nil
 }
 
-func (fs *fileSystem) Rename(ctx context.Context, oldName, newName string) error {
-	f, err := fs.getFile(ctx, oldName, false)
+func (fs *fileSystem) Rename(_ context.Context, oldName, newName string) error {
+	f, err := fs.getFile(oldName, false)
 	if err != nil {
 		return err
 	}
@@ -122,10 +120,10 @@ func (fs *fileSystem) Rename(ctx context.Context, oldName, newName string) error
 	return nil
 }
 
-func (fs *fileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error) {
+func (fs *fileSystem) Stat(_ context.Context, name string) (os.FileInfo, error) {
 	log.Debugf("stat %v", name)
 
-	f, err := fs.getFile(ctx, name, false)
+	f, err := fs.getFile(name, false)
 	if err != nil {
 		log.Error(err)
 		return nil, err
@@ -166,8 +164,8 @@ func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error)
 	return files, nil
 }
 
-func (fs *fileSystem) getFileID(ctx context.Context, p string, onlyFolder bool) (string, error) {
-	f, err := fs.getFile(ctx, p, onlyFolder)
+func (fs *fileSystem) getFileID(p string, onlyFolder bool) (string, error) {
+	f, err := fs.getFile(p, onlyFolder)
 	if err != nil {
 		return "", err
 	}
@@ -175,12 +173,12 @@ func (fs *fileSystem) getFileID(ctx context.Context, p string, onlyFolder bool) 
 	return f.Id, nil
 }
 
-func (fs *fileSystem) getFile0(ctx context.Context, p string, onlyFolder bool) (*drive.File, error) {
+func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 	log.Tracef("getFile0 %v %v", p, onlyFolder)
 	p = normalizePath(p)
 
 	if p == "" {
-		f, err := fs.client.Files.Get("root").Context(ctx).Do()
+		f, err := fs.client.Files.Get("root").Do()
 		if err != nil {
 			log.Error(err)
 			return nil, err
@@ -192,7 +190,7 @@ func (fs *fileSystem) getFile0(ctx context.Context, p string, onlyFolder bool) (
 	parent := path.Dir(p)
 	base := path.Base(p)
 
-	parentID, err := fs.getFileID(ctx, parent, true)
+	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
 		log.Errorf("can't locate parent %v error: %v", parent, err)
 		return nil, err

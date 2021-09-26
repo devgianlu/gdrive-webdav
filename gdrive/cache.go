@@ -1,7 +1,6 @@
 package gdrive
 
 import (
-	"golang.org/x/net/context"
 	"google.golang.org/api/drive/v3"
 	"time"
 
@@ -22,7 +21,7 @@ type fileLookupResult struct {
 	err error
 }
 
-func (fs *fileSystem) getFile(ctx context.Context, p string, onlyFolder bool) (*drive.File, error) {
+func (fs *fileSystem) getFile(p string, onlyFolder bool) (*drive.File, error) {
 	log.Tracef("getFile %v %v", p, onlyFolder)
 	key := cacheKeyFile + p
 
@@ -32,7 +31,7 @@ func (fs *fileSystem) getFile(ctx context.Context, p string, onlyFolder bool) (*
 		return result.fp, result.err
 	}
 
-	fp, err := fs.getFile0(ctx, p, onlyFolder)
+	fp, err := fs.getFile0(p, onlyFolder)
 	lookup := &fileLookupResult{fp: fp, err: err}
 	if err != nil {
 		fs.cache.Set(key, lookup, time.Minute)
