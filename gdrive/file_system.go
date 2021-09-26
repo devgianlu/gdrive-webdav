@@ -72,7 +72,6 @@ func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm 
 		}
 
 		return &openWritableFile{
-			ctx:        ctx,
 			fileSystem: fs,
 			name:       name,
 			flag:       flag,
@@ -132,6 +131,27 @@ func (fs *fileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error
 	return newFileInfo(f.file), nil
 }
 
+func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error) {
+	q := fs.client.Files.List()
+	q.Q(fmt.Sprintf("'%s' in parents", parent.Id))
+	q.PageSize(int64(count))
+
+	log.Tracef("query: %v", q)
+
+	r, err := q.Do()
+	if err != nil {
+		log.Error(err)
+		return nil, err
+	}
+
+	var files []*drive.File
+	for _, file := range r.Files {
+		files = append(files, file)
+	}
+
+	return files, nil
+}
+
 func (fs *fileSystem) getFileID(p string, onlyFolder bool) (string, error) {
 	f, err := fs.getFile(p, onlyFolder)
 
@@ -170,10 +190,9 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*fileAndPath, error) 
 		query += " and mimeType='" + mimeTypeFolder + "'"
 	}
 	q.Q(query)
-	log.Tracef("Query: %v", q)
+	log.Tracef("query: %v", q)
 
 	r, err := q.Do()
-
 	if err != nil {
 		log.Error(err)
 		return nil, err

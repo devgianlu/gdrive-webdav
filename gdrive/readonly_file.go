@@ -25,8 +25,17 @@ func (f *openReadonlyFile) Write(p []byte) (int, error) {
 }
 
 func (f *openReadonlyFile) Readdir(count int) ([]os.FileInfo, error) {
-	log.Panic("not supported")
-	return nil, nil
+	files, err := f.fs.List(f.file, count)
+	if err != nil {
+		return nil, err
+	}
+
+	var fileInfos []os.FileInfo
+	for _, file := range files {
+		fileInfos = append(fileInfos, newFileInfo(file))
+	}
+
+	return fileInfos, nil
 }
 
 func (f *openReadonlyFile) Stat() (os.FileInfo, error) {
@@ -55,6 +64,7 @@ func (f *openReadonlyFile) initContent() error {
 		log.Error(err)
 		return err
 	}
+
 	err = resp.Body.Close()
 	if err != nil {
 		log.Error(err)
@@ -68,9 +78,9 @@ func (f *openReadonlyFile) initContent() error {
 }
 
 func (f *openReadonlyFile) Read(p []byte) (n int, err error) {
-	log.Debug("Read ", len(p))
-	err = f.initContent()
+	log.Debugf("read %d", len(p))
 
+	err = f.initContent()
 	if err != nil {
 		log.Error(err)
 		return 0, err
@@ -81,12 +91,13 @@ func (f *openReadonlyFile) Read(p []byte) (n int, err error) {
 		log.Error(err)
 		return 0, err
 	}
+
 	f.pos += int64(n)
 	return n, err
 }
 
 func (f *openReadonlyFile) Seek(offset int64, whence int) (int64, error) {
-	log.Debug("Seek ", offset, whence)
+	log.Debugf("seek %d %d", offset, whence)
 
 	if whence == 0 {
 		// io.SeekStart

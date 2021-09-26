@@ -6,12 +6,10 @@ import (
 	"path"
 
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/context"
 	"google.golang.org/api/drive/v3"
 )
 
 type openWritableFile struct {
-	ctx        context.Context
 	fileSystem *fileSystem
 	buffer     bytes.Buffer
 	size       int64
@@ -27,7 +25,8 @@ func (f *openWritableFile) Write(p []byte) (int, error) {
 }
 
 func (f *openWritableFile) Readdir(count int) ([]os.FileInfo, error) {
-	panic("not supported")
+	log.Panic("not supported: openWritableFile.Readdir")
+	return nil, nil
 }
 
 func (f *openWritableFile) Stat() (os.FileInfo, error) {
@@ -38,7 +37,8 @@ func (f *openWritableFile) Stat() (os.FileInfo, error) {
 }
 
 func (f *openWritableFile) Close() error {
-	log.Debugf("Close %v", f.name)
+	log.Debugf("close %v", f.name)
+
 	fs := f.fileSystem
 	fileID, err := fs.getFileID(f.name, false)
 	if err != nil && err != os.ErrNotExist {
@@ -81,7 +81,7 @@ func (f *openWritableFile) Close() error {
 	fs.invalidatePath(f.name)
 	fs.invalidatePath(parent)
 
-	log.Debug("Close succesfull ", f.name)
+	log.Debugf("close successful %s", f.name)
 	return nil
 }
 
