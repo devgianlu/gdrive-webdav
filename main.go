@@ -42,11 +42,11 @@ func main() {
 	http.HandleFunc("/favicon.ico", notFoundHandler)
 	http.HandleFunc("/", handler.ServeHTTP)
 
-	log.Info("Listening on: ", *addr)
+	log.Infof("listening on %v", *addr)
 
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
-		log.Errorf("Error starting HTTP server: %v", err)
+		log.Errorf("error starting HTTP server: %v", err)
 		os.Exit(-1)
 	}
 }

@@ -18,8 +18,7 @@ type fileInfo struct {
 func newFileInfo(file *drive.File) *fileInfo {
 	modTime, err := getModTime(file)
 	if err != nil {
-		log.Error(err)
-		panic(err)
+		log.Panicf("failed getting modification time: %v", err)
 	}
 
 	return &fileInfo{

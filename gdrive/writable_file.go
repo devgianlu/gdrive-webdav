@@ -40,14 +40,13 @@ func (f *openWritableFile) Close() error {
 	fs := f.fs
 	fileID, err := fs.getFileID(f.name, false)
 	if err != nil && err != os.ErrNotExist {
-		log.Error(err)
+		log.Errorf("failed getting file ID (close): %v", err)
 		return err
 	}
 
 	if fileID != "" {
-		err = os.ErrExist
-		log.Error(err)
-		return err
+		// TODO: We should be able to overwrite the file
+		return os.ErrExist
 	}
 
 	parent := path.Dir(f.name)
@@ -55,14 +54,13 @@ func (f *openWritableFile) Close() error {
 
 	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed getting parent file ID: %v", err)
 		return err
 	}
 
 	if parentID == "" {
-		err = os.ErrNotExist
-		log.Error(err)
-		return err
+		log.Debugf("parent not found")
+		return os.ErrNotExist
 	}
 
 	file := &drive.File{
@@ -72,7 +70,7 @@ func (f *openWritableFile) Close() error {
 
 	_, err = fs.client.Files.Create(file).Media(&f.buffer).Do()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed creating file: %v", err)
 		return err
 	}
 

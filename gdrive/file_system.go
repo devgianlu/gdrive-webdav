@@ -23,11 +23,11 @@ func (fs *fileSystem) Mkdir(_ context.Context, name string, perm os.FileMode) er
 	name = normalizePath(name)
 	pID, err := fs.getFileID(name, false)
 	if err != nil && err != os.ErrNotExist {
-		log.Error(err)
+		log.Errorf("failed getting file ID (mkdir): %v", err)
 		return err
 	}
 	if err == nil {
-		log.Errorf("dir already exists: %v", pID)
+		log.Debugf("dir already exists: %v", pID)
 		return os.ErrExist
 	}
 
@@ -40,7 +40,7 @@ func (fs *fileSystem) Mkdir(_ context.Context, name string, perm os.FileMode) er
 	}
 
 	if parentID == "" {
-		log.Errorf("parent not found")
+		log.Debugf("parent not found")
 		return os.ErrNotExist
 	}
 
@@ -96,7 +96,7 @@ func (fs *fileSystem) RemoveAll(_ context.Context, name string) error {
 
 	err = fs.client.Files.Delete(id).Do()
 	if err != nil {
-		log.Errorf("can't delete file %v", err)
+		log.Errorf("failed deleting file (removeAll): %v", err)
 		return err
 	}
 
@@ -125,12 +125,12 @@ func (fs *fileSystem) Stat(_ context.Context, name string) (os.FileInfo, error) 
 
 	f, err := fs.getFile(name, false)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed getting file ID (stat): %v", err)
 		return nil, err
 	}
 
 	if f == nil {
-		log.Debugf("can't find file %v", name)
+		log.Debugf("no such file: %v", name)
 		return nil, os.ErrNotExist
 	}
 
@@ -148,7 +148,7 @@ func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error)
 
 	r, err := q.Do()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed listing files (list): %v", err)
 		return nil, err
 	}
 
@@ -180,7 +180,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 	if p == "" {
 		f, err := fs.client.Files.Get("root").Do()
 		if err != nil {
-			log.Error(err)
+			log.Errorf("failed getting root file: %v", err)
 			return nil, err
 		}
 
@@ -192,7 +192,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 
 	parentID, err := fs.getFileID(parent, true)
 	if err != nil {
-		log.Errorf("can't locate parent %v error: %v", parent, err)
+		log.Errorf("failed getting file ID for %v, %v", parent, err)
 		return nil, err
 	}
 
@@ -207,7 +207,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 
 	r, err := q.Do()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed getting file ID (getFile0): %v", err)
 		return nil, err
 	}
 

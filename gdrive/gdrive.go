@@ -20,7 +20,7 @@ const (
 func NewFS(ctx context.Context, clientID string, clientSecret string) webdav.FileSystem {
 	client, err := drive.NewService(ctx, option.WithHTTPClient(newHTTPClient(ctx, clientID, clientSecret)))
 	if err != nil {
-		log.Errorf("An error occurred creating Drive client: %v\n", err)
+		log.Errorf("an error occurred creating the GDrive client: %v", err)
 		panic(-3)
 	}
 

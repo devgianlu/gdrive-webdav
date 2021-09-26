@@ -34,7 +34,7 @@ func newHTTPClient(ctx context.Context, clientID string, clientSecret string) *h
 		tok = getTokenFromWeb(ctx, config)
 		err = saveToken(tok)
 		if err != nil {
-			log.Errorf("An error occurred saving token file: %v\n", err)
+			log.Errorf("an error occurred saving the token file: %v", err)
 		}
 	}
 

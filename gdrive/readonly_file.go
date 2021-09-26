@@ -59,19 +59,19 @@ func (f *openReadonlyFile) initContent() error {
 
 	resp, err := f.fs.client.Files.Get(f.file.Id).Download()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed getting file (initContent): %v", err)
 		return err
 	}
 
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed reading file: %v", err)
 		return err
 	}
 
 	err = resp.Body.Close()
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed closing file: %v", err)
 		return err
 	}
 
@@ -86,13 +86,12 @@ func (f *openReadonlyFile) Read(p []byte) (n int, err error) {
 
 	err = f.initContent()
 	if err != nil {
-		log.Error(err)
 		return 0, err
 	}
 
 	n, err = f.contentReader.Read(p)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("failed reading file: %v", err)
 		return 0, err
 	}
 
