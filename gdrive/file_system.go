@@ -108,7 +108,17 @@ func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (fs *fileSystem) Rename(ctx context.Context, oldName, newName string) error {
-	log.Panic("not implemented: fileSystem.Rename") // TODO
+	f, err := fs.getFile(ctx, oldName, false)
+	if err != nil {
+		return err
+	}
+
+	f.Name = newName
+	_, err = fs.client.Files.Update(f.Id, f).Do()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
