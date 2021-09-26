@@ -134,7 +134,9 @@ func (fs *fileSystem) Stat(ctx context.Context, name string) (os.FileInfo, error
 func (fs *fileSystem) List(parent *drive.File, count int) ([]*drive.File, error) {
 	q := fs.client.Files.List()
 	q.Q(fmt.Sprintf("'%s' in parents", parent.Id))
-	q.PageSize(int64(count))
+	if count != 0 {
+		q.PageSize(int64(count))
+	}
 
 	log.Tracef("query: %v", q)
 
