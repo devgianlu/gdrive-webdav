@@ -20,7 +20,7 @@ type openReadonlyFile struct {
 }
 
 func (f *openReadonlyFile) Write(p []byte) (int, error) {
-	log.Panic("not implemented")
+	log.Panic("not implemented: openReadonlyFile.Write")
 	return -1, nil
 }
 
@@ -109,5 +109,6 @@ func (f *openReadonlyFile) Seek(offset int64, whence int) (int64, error) {
 		return f.pos, nil
 	}
 
-	panic("not implemented")
+	log.Panic("not implemented: openReadonlyFile.Seek")
+	return 0, nil
 }

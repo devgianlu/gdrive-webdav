@@ -68,7 +68,7 @@ func (fs *fileSystem) OpenFile(ctx context.Context, name string, flag int, perm 
 
 	if flag&os.O_RDWR != 0 {
 		if flag != os.O_RDWR|os.O_CREATE|os.O_TRUNC {
-			panic("not implemented")
+			log.Panic("not implemented: fileSystem.OpenFile")
 		}
 
 		return &openWritableFile{
@@ -111,7 +111,7 @@ func (fs *fileSystem) RemoveAll(ctx context.Context, name string) error {
 }
 
 func (fs *fileSystem) Rename(ctx context.Context, oldName, newName string) error {
-	log.Panic("not implemented")
+	log.Panic("not implemented: fileSystem.Rename")
 	return nil
 }
 

@@ -86,11 +86,11 @@ func (f *openWritableFile) Close() error {
 }
 
 func (f *openWritableFile) Read(p []byte) (n int, err error) {
-	log.Panic("not implemented")
+	log.Panic("not implemented: openWritableFile.Read")
 	return -1, nil
 }
 
 func (f *openWritableFile) Seek(offset int64, whence int) (int64, error) {
-	log.Panic("not implemented")
+	log.Panic("not implemented: openWritableFile.Seek")
 	return -1, nil
 }

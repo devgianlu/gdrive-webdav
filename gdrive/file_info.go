@@ -33,14 +33,14 @@ func (fi *fileInfo) IsDir() bool {
 }
 
 func (fi *fileInfo) Name() string {
-	log.Panic("not implemented")
+	log.Panic("not implemented: fileInfo.Name")
 	return ""
 }
 func (fi *fileInfo) Size() int64 {
 	return fi.size
 }
 func (fi *fileInfo) Mode() os.FileMode {
-	log.Panic("not implemented")
+	log.Panic("not implemented: fileInfo.Mode")
 	return 0
 }
 func (fi *fileInfo) ModTime() time.Time {

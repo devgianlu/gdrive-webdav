@@ -24,12 +24,12 @@ func main() {
 	flag.Parse()
 
 	if *clientID == "" {
-		fmt.Fprintln(os.Stderr, "--client-id is not specified. See https://developers.google.com/drive/quickstart-go for step-by-step guide.")
+		_, _ = fmt.Fprintln(os.Stderr, "--client-id is not specified. See https://developers.google.com/drive/quickstart-go for step-by-step guide.")
 		os.Exit(-1)
 	}
 
 	if *clientSecret == "" {
-		fmt.Fprintln(os.Stderr, "--client-secret is not specified. See https://developers.google.com/drive/quickstart-go for step-by-step guide.")
+		_, _ = fmt.Fprintln(os.Stderr, "--client-secret is not specified. See https://developers.google.com/drive/quickstart-go for step-by-step guide.")
 		os.Exit(-1)
 	}
 
