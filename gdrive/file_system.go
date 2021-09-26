@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	gocache "github.com/pmylund/go-cache"
 	log "github.com/sirupsen/logrus"
@@ -197,7 +198,7 @@ func (fs *fileSystem) getFile0(p string, onlyFolder bool) (*drive.File, error) {
 	}
 
 	q := fs.client.Files.List()
-	query := fmt.Sprintf("'%s' in parents and name='%s'", parentID, base)
+	query := fmt.Sprintf("'%s' in parents and name='%s'", parentID, strings.ReplaceAll(base, "'", "\\'"))
 	if onlyFolder {
 		query += " and mimeType='" + mimeTypeFolder + "'"
 	}
