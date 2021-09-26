@@ -1,15 +1,8 @@
-# Build
-FROM golang:latest
-COPY . /go/src/github.com/mikea/gdrive-webdav/
-RUN go get -v github.com/mikea/gdrive-webdav
+FROM golang:1.16
 
-
-# Run
-FROM debian:stable-slim  
-RUN apt update && apt install -y ca-certificates
-
-WORKDIR /root/
-COPY --from=0 /go/bin/gdrive-webdav .
+WORKDIR /go/src/gdrive-webdav
+COPY . .
+RUN go mod tidy && go build .
 
 EXPOSE 8765
 ENTRYPOINT ["./gdrive-webdav" ]
