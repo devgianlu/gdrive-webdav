@@ -2,7 +2,7 @@ services:
   webdav:
     build: .
     container_name: webdav
-    hostname: webdav
+    restart: unless-stopped
     volumes:
       - ./data:/root/data
     command:
